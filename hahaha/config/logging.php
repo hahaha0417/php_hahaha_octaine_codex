@@ -65,13 +65,45 @@ return [
             'replace_placeholders' => true,
         ],
 
-        'daily' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/laravel.log'),
+        'log_hahaha' => [
+            'driver' => 'single',
+            'path' => storage_path(
+                'logs/hahaha/hahaha_' . now()->format('Y_m_d') . '.log'
+            ),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
         ],
+
+        'log_error' => [
+            'driver' => 'single',
+            'path' => storage_path(
+                'logs/error/error_' . now()->format('Y_m_d') . '.log'
+            ),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'log_other' => [
+            'driver' => 'single',
+            'path' => storage_path(
+                'logs/other/other_' . now()->format('Y_m_d') . '.log'
+            ),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'daily' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/origin/laravel.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+
 
         'slack' => [
             'driver' => 'slack',

@@ -37,7 +37,9 @@
         "files": [
             "bootstrap/hahaha_signal_constants.php"
         ],
-        "classmap": []
+        "classmap": [
+            "library/hahahalib"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
