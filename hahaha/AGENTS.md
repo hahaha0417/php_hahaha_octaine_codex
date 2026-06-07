@@ -215,3 +215,15 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 - 規則：Enum 值使用 `UPPER_SNAKE_CASE`。
   - 建議：`PENDING_APPROVAL`、`PAYMENT_FAILED`
   - 避免：`PendingApproval`、`paymentFailed`
+
+## enum / config 規範
+
+- 規則：本專案 `code/enum` 內優先使用一般 PHP class 常數，不使用 PHP `enum`。
+  - 建議：`class hahaha_enum_animal { public const DOG = 'DOG'; }`
+  - 避免：`enum hahaha_enum_animal: string { case DOG = 'DOG'; }`
+- 規則：`code/config` 內的設定對照表，key 直接使用 enum class 常數值。
+  - 建議：`hahaha_enum_animal::DOG => '狗'`
+  - 避免：`hahaha_enum_animal::DOG->value => '狗'`
+- 規則：需要分類切換的 config，於 `Initial($type = '1')` 內手動列舉各組內容，保留可直接編輯的寫法。
+  - 建議：`if ($type == '1') { ... } elseif ($type == '2') { ... }`
+  - 避免：用自動推導或 `cases()` 產生，造成後續不易手動調整順序與內容

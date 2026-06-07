@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\backend\animal\hahaha_backend_animal_controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -8,3 +9,5 @@ Route::get('/', function () {
 
     return view('welcome');
 });
+
+Route::get('/backend/animal', [hahaha_backend_animal_controller::class, 'Index'])->name('backend.animal');

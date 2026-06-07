@@ -39,7 +39,8 @@
             "bootstrap/hahaha_signal_constants.php"
         ],
         "classmap": [
-            "library/hahahalib"
+            "library/hahahalib",
+            "code"
         ]
     },
     "autoload-dev": {
