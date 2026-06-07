@@ -169,8 +169,8 @@
                     <div class="field_group_">
                         <label class="label_" for="type_select">類型</label>
                         <select id="type_select" name="type" class="w-full">
-                            <option value="1" @selected($type_ === '1')>陸上動物</option>
-                            <option value="2" @selected($type_ === '2')>海上動物</option>
+                            <option value="1" @selected($parameter_->Type_ === '1')>陸上動物</option>
+                            <option value="2" @selected($parameter_->Type_ === '2')>海上動物</option>
                         </select>
                     </div>
 
@@ -178,7 +178,7 @@
                         <label class="label_" for="animal_select">請選擇動物</label>
                         <select id="animal_select" class="w-full">
                             <option value="">請選擇</option>
-                            @foreach ($animal2_ as $animal_key_ => $animal_name_)
+                            @foreach ($parameter_->Animal2_ as $animal_key_ => $animal_name_)
                                 <option value="{{ $animal_key_ }}">{{ $animal_name_ }}</option>
                             @endforeach
                         </select>

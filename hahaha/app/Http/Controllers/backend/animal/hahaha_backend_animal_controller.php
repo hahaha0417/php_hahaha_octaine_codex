@@ -4,6 +4,7 @@ namespace App\Http\Controllers\backend\animal;
 
 use App\Http\Controllers\Controller;
 use hahaha\config\hahaha_config_animal;
+use hahaha\hahaha_parameter;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -21,10 +22,12 @@ class hahaha_backend_animal_controller extends Controller
         }
 
         $animal_config_ = hahaha_config_animal::Instance()->Initial($type_);
+        $parameter_ = hahaha_parameter::Instance()->Clear();
+        $parameter_->Animal2_ = &$animal_config_->Animal2_;
+        $parameter_->Type_ = $type_;
 
         return view('backend.animal', [
-            'animal2_' => $animal_config_->Animal2_,
-            'type_' => $type_,
+            'parameter_' => $parameter_,
         ]);
     }
 }

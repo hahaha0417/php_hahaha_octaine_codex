@@ -13,7 +13,23 @@ class hahaha_config_animal
 
     public $Animal2_ = [];
 
+    public $Animal2_Type_ = null;
+
     public function Initial($type = '1')
+    {
+        if (count($this->Animal_) === 0) {
+            $this->Animal_ = $this->Initail_Animal();
+        }
+
+        if ($this->Animal2_Type_ != $type || count($this->Animal2_) === 0) {
+            $this->Animal2_ = $this->Initail_Animal2($type);
+            $this->Animal2_Type_ = $type;
+        }
+
+        return $this;
+    }
+
+    public function Initail_Animal()
     {
         $animal = [
             hahaha_enum_animal::CAT => '貓',
@@ -28,6 +44,11 @@ class hahaha_config_animal
             hahaha_enum_animal::FISH => '魚',
         ];
 
+        return $animal;
+    }
+
+    public function Initail_Animal2($type = '1')
+    {
         $animal2 = [];
 
         if ($type == '1') {
@@ -50,9 +71,6 @@ class hahaha_config_animal
             ];
         }
 
-        $this->Animal_ = $animal;
-        $this->Animal2_ = $animal2;
-
-        return $this;
+        return $animal2;
     }
 }
