@@ -60,6 +60,7 @@ class hahaha_test_log_viewer extends TestCase
         $response_->assertSee('頁數');
         $response_->assertSee('log-viewer/files');
         $response_->assertSee('log-viewer/content');
+        $response_->assertSee('sweetalert2');
         $response_->assertSee('99');
         $response_->assertSee('queue-test.log');
         $response_->assertDontSee('Latest warning line');
@@ -73,6 +74,7 @@ class hahaha_test_log_viewer extends TestCase
 
         $response_->assertStatus(200);
         $response_->assertJsonPath('log_directory_path', realpath($this->log_directory_path_) ?: $this->log_directory_path_);
+        $response_->assertJsonPath('log_directory_allowed_root_path', dirname(base_path()));
         $response_->assertJsonPath('selected_log_file', 'queue-test.log');
         $response_->assertJsonPath('block_limit', 99);
         $response_->assertJsonPath('log_file_options.0.key', 'queue-test.log');
@@ -122,6 +124,16 @@ class hahaha_test_log_viewer extends TestCase
 
         $response_->assertStatus(200);
         $response_->assertJsonPath('error_message', '找不到指定的 log 資料夾，請確認路徑存在且為目錄。');
+    }
+
+    public function test_log_viewer_files_endpoint_shows_error_for_directory_outside_allowed_root(): void
+    {
+        $response_ = $this->get('/page/demo/log-viewer/files?'.http_build_query([
+            'log_directory' => dirname(dirname(base_path())),
+        ]));
+
+        $response_->assertStatus(200);
+        $response_->assertJsonPath('error_message', '指定路徑超出允許範圍，僅可查看 base_path 上層目錄內的資料夾。');
     }
 
     public function test_log_viewer_content_endpoint_shows_error_for_invalid_directory(): void

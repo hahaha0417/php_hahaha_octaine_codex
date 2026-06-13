@@ -16,6 +16,8 @@ class hahaha_config_log_viewer
 
     public $Log_Directory_Default_Path_ = '';
 
+    public $Log_Directory_Allowed_Root_Path_ = '';
+
     public $Log_Directory_Input_ = '';
 
     public $Log_Directory_Path_ = '';
@@ -47,6 +49,7 @@ class hahaha_config_log_viewer
         $this->Page_Title_ = 'Log Viewer';
         $this->Page_Subtitle_ = '用 multiple node 規則快速查看指定資料夾內的 log 檔，檔案內容由前台下載並於瀏覽器端完成行號、上色、搜尋、篩選、顯示區塊數與區塊折疊。';
         $this->Log_Directory_Default_Path_ = storage_path('logs');
+        $this->Log_Directory_Allowed_Root_Path_ = $this->Log_Directory_Allowed_Root_Path_Resolve();
         $this->Log_Directory_Input_ = $log_directory_path !== '' ? $log_directory_path : $this->Log_Directory_Default_Path_;
         $this->Log_Directory_Path_ = '';
         $this->Log_Directory_Status_ = '';
@@ -62,7 +65,7 @@ class hahaha_config_log_viewer
             'error' => '只看 Error',
             'warning' => '只看 Warning',
             'json' => '只看 Json',
-            'non_laravel' => '只看 非Laravel Log',
+            'non_laravel' => '只看非laravel log',
         ];
         $this->Severity_Filter_ = $this->Severity_Filter_Resolve($severity_filter);
         $this->Block_Limit_ = $this->Block_Limit_Resolve($block_limit);
@@ -70,7 +73,7 @@ class hahaha_config_log_viewer
         $this->Log_Directory_Path_ = $this->Log_Directory_Path_Resolve($this->Log_Directory_Input_);
 
         if ($this->Log_Directory_Path_ === '') {
-            $this->Error_Message_ = '找不到指定的 log 資料夾，請確認路徑存在且為目錄。';
+            $this->Error_Message_ = $this->Log_Directory_Error_Message_Resolve($this->Log_Directory_Input_);
 
             return $this;
         }
@@ -117,7 +120,53 @@ class hahaha_config_log_viewer
             return '';
         }
 
+        if (! $this->Log_Directory_Is_Within_Allowed_Root($resolved_log_directory_path_)) {
+            return '';
+        }
+
         return $resolved_log_directory_path_;
+    }
+
+    public function Log_Directory_Allowed_Root_Path_Resolve(): string
+    {
+        return dirname(base_path());
+    }
+
+    public function Log_Directory_Is_Within_Allowed_Root(string $log_directory_path = ''): bool
+    {
+        $allowed_root_path_ = $this->Path_Normalize_Resolve($this->Log_Directory_Allowed_Root_Path_);
+        $resolved_log_directory_path_ = $this->Path_Normalize_Resolve($log_directory_path);
+
+        if ($allowed_root_path_ === '' || $resolved_log_directory_path_ === '') {
+            return false;
+        }
+
+        if ($resolved_log_directory_path_ === $allowed_root_path_) {
+            return true;
+        }
+
+        return str_starts_with($resolved_log_directory_path_, $allowed_root_path_.DIRECTORY_SEPARATOR);
+    }
+
+    public function Log_Directory_Error_Message_Resolve(string $log_directory_path = ''): string
+    {
+        $log_directory_path_ = trim($log_directory_path);
+
+        if ($log_directory_path_ === '') {
+            return '找不到指定的 log 資料夾，請確認路徑存在且為目錄。';
+        }
+
+        if (! preg_match('/^[A-Za-z]:[\\\\\\/]/', $log_directory_path_) && ! str_starts_with($log_directory_path_, DIRECTORY_SEPARATOR)) {
+            $log_directory_path_ = base_path($log_directory_path_);
+        }
+
+        $resolved_log_directory_path_ = realpath($log_directory_path_);
+
+        if ($resolved_log_directory_path_ !== false && ! $this->Log_Directory_Is_Within_Allowed_Root($resolved_log_directory_path_)) {
+            return '指定路徑超出允許範圍，僅可查看 base_path 上層目錄內的資料夾。';
+        }
+
+        return '找不到指定的 log 資料夾，請確認路徑存在且為目錄。';
     }
 
     /**
@@ -211,6 +260,7 @@ class hahaha_config_log_viewer
      *     page_title: string,
      *     page_subtitle: string,
      *     log_directory_default_path: string,
+     *     log_directory_allowed_root_path: string,
      *     log_directory_input: string,
      *     log_directory_path: string,
      *     log_directory_status: string,
@@ -232,6 +282,7 @@ class hahaha_config_log_viewer
             'page_title' => $this->Page_Title_,
             'page_subtitle' => $this->Page_Subtitle_,
             'log_directory_default_path' => $this->Log_Directory_Default_Path_,
+            'log_directory_allowed_root_path' => $this->Log_Directory_Allowed_Root_Path_,
             'log_directory_input' => $this->Log_Directory_Input_,
             'log_directory_path' => $this->Log_Directory_Path_,
             'log_directory_status' => $this->Log_Directory_Status_,
@@ -268,5 +319,16 @@ class hahaha_config_log_viewer
         }
 
         return date('Y-m-d H:i:s', $timestamp);
+    }
+
+    public function Path_Normalize_Resolve(string $path = ''): string
+    {
+        $path_ = trim($path);
+
+        if ($path_ === '') {
+            return '';
+        }
+
+        return rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, strtolower($path_)), DIRECTORY_SEPARATOR);
     }
 }

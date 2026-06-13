@@ -566,12 +566,13 @@
                 </article>
             </section>
 
-            <div class="footer_">route: `page.demo.log_viewer`</div>
+            <div class="footer_">route: `page.demo.log_viewer` / shortcuts: `q` 最前、`w` 上頁、`e` 下頁、`r` 最後</div>
         </main>
 
         <script id="log_viewer_bootstrap_" type="application/json">
             {!! $frontend_bootstrap_ !!}
         </script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             (function () {
                 var bootstrapElement = document.getElementById('log_viewer_bootstrap_');
@@ -618,6 +619,7 @@
                 var state = {
                     directoryInput: initialState.log_directory_input || '',
                     directoryPath: initialState.log_directory_path || '',
+                    allowedRootPath: initialState.log_directory_allowed_root_path || '',
                     directoryStatus: initialState.log_directory_status || '',
                     errorMessage: initialState.error_message || '',
                     files: initialState.log_file_options || [],
@@ -647,6 +649,21 @@
                         .replace(/>/g, '&gt;')
                         .replace(/"/g, '&quot;')
                         .replace(/'/g, '&#039;');
+                }
+
+                function showWarningDialog(message) {
+                    if (window.Swal && typeof window.Swal.fire === 'function') {
+                        window.Swal.fire({
+                            icon: 'warning',
+                            title: '路徑超出範圍',
+                            text: message,
+                            confirmButtonText: '知道了',
+                        });
+
+                        return;
+                    }
+
+                    window.alert(message);
                 }
 
                 function resolveTone(logLine) {
@@ -743,6 +760,48 @@
                     url.searchParams.set('updated_timestamp', String(selectedLogFile.updated_timestamp || 0));
 
                     return url.toString();
+                }
+
+                function normalizePath(value) {
+                    return String(value || '')
+                        .replace(/\//g, '\\')
+                        .replace(/\\+/g, '\\')
+                        .replace(/[\\]+$/, '')
+                        .toLowerCase();
+                }
+
+                function isDirectoryWithinAllowedRoot(directoryPath) {
+                    var allowedRootPath = normalizePath(state.allowedRootPath);
+                    var requestedDirectoryPath = normalizePath(directoryPath);
+
+                    if (allowedRootPath === '' || requestedDirectoryPath === '') {
+                        return false;
+                    }
+
+                    if (requestedDirectoryPath === allowedRootPath) {
+                        return true;
+                    }
+
+                    return requestedDirectoryPath.indexOf(allowedRootPath + '\\') === 0;
+                }
+
+                function validateDirectoryInput(requestedDirectory) {
+                    var trimmedDirectory = String(requestedDirectory || '').trim();
+                    var message = '';
+
+                    if (trimmedDirectory === '') {
+                        return true;
+                    }
+
+                    if (isDirectoryWithinAllowedRoot(trimmedDirectory)) {
+                        return true;
+                    }
+
+                    message = '指定路徑超出允許範圍，僅可查看 base_path 上層目錄內的資料夾。';
+                    showWarningDialog(message);
+                    setStatus(message, true);
+
+                    return false;
                 }
 
                 function resolveCollapseStateStorageKey() {
@@ -1489,6 +1548,10 @@
                 function loadDirectory(requestedDirectory, requestedLogFile) {
                     var url = new URL(endpoints.files, window.location.origin);
 
+                    if (! validateDirectoryInput(requestedDirectory)) {
+                        return;
+                    }
+
                     state.directoryInput = String(requestedDirectory || '').trim();
                     state.errorMessage = '';
                     setStatus('前台更新資料夾與檔案清單中...', false);
@@ -1608,11 +1671,53 @@
                     updateHistory();
                 }
 
+                function goToFirstPage() {
+                    state.currentPage = 1;
+                    renderRows();
+                    updateHistory();
+                }
+
+                function goToPreviousPage() {
+                    if (state.currentPage > 1) {
+                        state.currentPage -= 1;
+                        renderRows();
+                        updateHistory();
+                    }
+                }
+
+                function goToNextPage() {
+                    state.currentPage += 1;
+                    renderRows();
+                    updateHistory();
+                }
+
+                function goToLastPage() {
+                    state.currentPage = 999999;
+                    renderRows();
+                    updateHistory();
+                }
+
+                function isTypingTarget(target) {
+                    var tagName = '';
+
+                    if (! target) {
+                        return false;
+                    }
+
+                    tagName = String(target.tagName || '').toUpperCase();
+
+                    if (target.isContentEditable) {
+                        return true;
+                    }
+
+                    return tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT';
+                }
+
                 elements.logDirectoryInput.value = state.directoryInput;
                 elements.keywordInput.value = state.keywordInput;
                 elements.fileSearchInput.value = state.fileSearchInput;
                 elements.severityFilterInput.value = state.severityFilter;
-                elements.blockLimitInput.value = state.blockLimit;
+                    elements.blockLimitInput.value = state.blockLimit;
                 elements.reverseBlocksInput.checked = state.reverseBlocks;
 
                 elements.changeDirectoryButton.addEventListener('click', function () {
@@ -1656,29 +1761,19 @@
                 });
 
                 elements.pageFirstButton.addEventListener('click', function () {
-                    state.currentPage = 1;
-                    renderRows();
-                    updateHistory();
+                    goToFirstPage();
                 });
 
                 elements.pagePreviousButton.addEventListener('click', function () {
-                    if (state.currentPage > 1) {
-                        state.currentPage -= 1;
-                        renderRows();
-                        updateHistory();
-                    }
+                    goToPreviousPage();
                 });
 
                 elements.pageNextButton.addEventListener('click', function () {
-                    state.currentPage += 1;
-                    renderRows();
-                    updateHistory();
+                    goToNextPage();
                 });
 
                 elements.pageLastButton.addEventListener('click', function () {
-                    state.currentPage = 999999;
-                    renderRows();
-                    updateHistory();
+                    goToLastPage();
                 });
 
                 elements.pageJumpButton.addEventListener('click', function () {
@@ -1730,6 +1825,42 @@
                     if (event.key === 'Enter') {
                         event.preventDefault();
                         runSearch();
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) {
+                        return;
+                    }
+
+                    if (isTypingTarget(event.target)) {
+                        return;
+                    }
+
+                    if (event.key === 'q' || event.key === 'Q') {
+                        event.preventDefault();
+                        goToFirstPage();
+
+                        return;
+                    }
+
+                    if (event.key === 'w' || event.key === 'W') {
+                        event.preventDefault();
+                        goToPreviousPage();
+
+                        return;
+                    }
+
+                    if (event.key === 'e' || event.key === 'E') {
+                        event.preventDefault();
+                        goToNextPage();
+
+                        return;
+                    }
+
+                    if (event.key === 'r' || event.key === 'R') {
+                        event.preventDefault();
+                        goToLastPage();
                     }
                 });
 
