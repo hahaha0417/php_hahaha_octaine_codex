@@ -11,3 +11,5 @@ Route::get('/', function () {
 });
 
 Route::get('/backend/animal', [hahaha_backend_animal_controller::class, 'Index'])->name('backend.animal');
+
+require __DIR__.'/web/template.php';

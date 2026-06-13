@@ -1,4 +1,5 @@
 php artisan app:hahaha-cache-ai-context
 php artisan app:hahaha-cache-code-summary
 php artisan app:hahaha-cache-project-structure
+php artisan app:hahaha-cache-node-project-analysis
 php artisan db:hahaha_command_db_table_enum_generate

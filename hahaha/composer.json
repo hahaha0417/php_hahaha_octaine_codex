@@ -40,7 +40,8 @@
         ],
         "classmap": [
             "library/hahahalib",
-            "code"
+            "code",
+            "template"
         ]
     },
     "autoload-dev": {
